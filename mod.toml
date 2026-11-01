@@ -1,0 +1,54 @@
+id = "speedrun-quickstart"
+name = "Speedrun Quickstart"
+version = "0.1.0"
+authors = ["An1by"]
+cover = "assets/cover.png"
+description = "Быстрый старт спидрана: пропуск интро и удобные настройки забега."
+kzm_spec = 1
+legacy = false
+
+[game]
+cleanRoot = false
+
+[depends]
+
+[conflicts]
+mods = []
+
+[lua]
+sourceEntry = "lua/main.lua"
+distEntry = "dist/entry.lua"
+priority = 100
+loadlistExtra = ["mods/speedrun-quickstart/quickstart.lua"]
+
+[lua.hooks]
+scripts = []
+objects = [
+    "obj_saveprompt",
+    "obj_optionsprompt",
+    "obj_logo",
+    "obj_splash",
+    "obj_titlemenu",
+]
+
+[lua.hooks.merge]
+
+[native]
+plugins = []
+
+[[assets]]
+src = "lua/quickstart.lua"
+dest = "quickstart.lua"
+gameRoot = false
+
+[patches]
+mode = "none"
+bundle = []
+
+[i18n]
+defaultLocale = ""
+fallbackLocale = ""
+
+[i18n.ui]
+
+[i18n.dialogues]
