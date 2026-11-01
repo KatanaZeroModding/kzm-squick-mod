@@ -23,6 +23,32 @@ local function log(msg)
   end
 end
 
+-- Runtime functions in this libLassebq are `room_goto`, not `GML_room_goto`.
+-- Scripts are `GMLScript_<name>`. Try both so a prefix change does not silently no-op.
+local function resolve(name)
+  local fn = rawget(_G, name)
+  if type(fn) == "function" then
+    return fn
+  end
+  fn = rawget(_G, "GML_" .. name)
+  if type(fn) == "function" then
+    return fn
+  end
+  return nil
+end
+
+local function script_fn(name)
+  local fn = rawget(_G, "GMLScript_" .. name)
+  if type(fn) == "function" then
+    return fn
+  end
+  fn = rawget(_G, "gml_Script_" .. name)
+  if type(fn) == "function" then
+    return fn
+  end
+  return nil
+end
+
 local function global(name)
   local ok, value = pcall(function()
     return _pGlobal[name]
@@ -38,8 +64,18 @@ local function truthy(value)
 end
 
 local function skip_to_title()
-  if state.startup then
-    GML_room_goto(room_title)
+  if not state.startup then
+    return
+  end
+  local goto_room = resolve("room_goto")
+  local title = rawget(_G, "room_title")
+  if type(goto_room) ~= "function" or type(title) ~= "number" then
+    log("skip failed: room_goto=" .. type(goto_room) .. " room_title=" .. tostring(title))
+    return
+  end
+  local ok, err = pcall(goto_room, title)
+  if not ok then
+    log("room_goto error: " .. tostring(err))
   end
 end
 
@@ -49,23 +85,37 @@ local function try_resume()
   if not truthy(global("mid_speedrun")) then
     return false, "no saved speedrun"
   end
-  if truthy(GML_keyboard_check(VK_SHIFT)) then
+  local key_check = resolve("keyboard_check")
+  if type(key_check) == "function" and truthy(key_check(VK_SHIFT)) then
     return false, "Shift held, staying on title"
   end
 
-  local ok, loaded = pcall(GMLScript_load_current_speedrun)
+  local load_run = script_fn("load_current_speedrun")
+  if type(load_run) ~= "function" then
+    return false, "load_current_speedrun missing"
+  end
+  local ok, loaded = pcall(load_run)
   if not ok or not truthy(loaded) then
     return false, "load_current_speedrun failed: " .. tostring(loaded)
   end
 
   local room = global("continue_room")
-  if type(room) ~= "number" or not truthy(GML_room_exists(room)) then
+  local room_exists = resolve("room_exists")
+  if type(room) ~= "number" or type(room_exists) ~= "function" or not truthy(room_exists(room)) then
     return false, "invalid continue_room: " .. tostring(room)
   end
 
   _pGlobal.speedrun = 1
-  GML_room_goto(room)
-  return true, GML_room_get_name(room)
+  local goto_room = resolve("room_goto")
+  if type(goto_room) ~= "function" then
+    return false, "room_goto missing"
+  end
+  goto_room(room)
+  local room_name = resolve("room_get_name")
+  if type(room_name) == "function" then
+    return true, room_name(room)
+  end
+  return true, tostring(room)
 end
 
 local skip_intro = { Create = skip_to_title }
@@ -96,5 +146,6 @@ local hooks = {
   },
 }
 
+log("hooks ready")
 _G.__SPEEDRUN_QUICKSTART_HOOKS = hooks
 return hooks

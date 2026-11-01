@@ -1,6 +1,6 @@
 id = "speedrun-quickstart"
 name = "Speedrun Quickstart"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["An1by"]
 cover = "assets/cover.png"
 description = "Быстрый старт спидрана: пропуск интро и удобные настройки забега."
@@ -52,3 +52,4 @@ fallbackLocale = ""
 [i18n.ui]
 
 [i18n.dialogues]
+
